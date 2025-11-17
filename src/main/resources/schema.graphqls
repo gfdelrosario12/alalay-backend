@@ -1,0 +1,87 @@
+enum Role { Admin Rescuer User }
+enum Status { Safe Unsafe Unknown }
+
+type User {
+    id: ID!
+    email: String!
+    firstName: String
+    middleName: String
+    lastName: String
+    permanentAddress: String
+    age: Int
+    birthDate: String
+    emergencyContact: String
+    role: Role!
+    bookmarkedUsers: [User]
+}
+
+type Calamity {
+    id: ID!
+    startDate: String!
+    description: String
+    calamityCategory: String
+    reportedEndDate: String
+    affectedAreas: String
+}
+
+type AffectedIndividualLog {
+    id: ID!
+    calamity: Calamity!
+    instanceDatetime: String!
+    description: String
+    instanceLocation: String
+    isResponded: Boolean
+    responseDatetime: String
+    rescuer: User
+    otherAffectedMembers: String
+    otherImportantDetails: String
+}
+
+type ResponseLog {
+    id: ID!
+    user: User!
+    calamity: Calamity!
+    description: String
+    logLocation: String
+    logDatetime: String
+    responseDetails: String
+}
+
+type UserStatusUpdate {
+    id: ID!
+    user: User!
+    calamity: Calamity!
+    status: Status!
+    currentSituation: String
+    updateDatetime: String
+    location: String
+}
+
+type Query {
+    users: [User!]!
+    user(id: ID!): User
+    calamities: [Calamity!]!
+    calamity(id: ID!): Calamity
+}
+
+type Mutation {
+    createUser(
+        email: String!
+        firstName: String
+        middleName: String
+        lastName: String
+        permanentAddress: String
+        age: Int
+        birthDate: String
+        emergencyContact: String
+        role: Role!
+    ): User!
+
+    createCalamity(
+        startDate: String!
+        description: String
+        calamityCategory: String
+        reportedEndDate: String
+        affectedAreas: String
+    ): Calamity!
+}
