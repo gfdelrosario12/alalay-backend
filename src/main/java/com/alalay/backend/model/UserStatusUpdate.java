@@ -1,15 +1,24 @@
 package com.alalay.backend.model;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-import java.time.LocalDateTime;
+import java.awt.*;
+import java.time.Instant;
 import java.util.UUID;
 
 @Entity
 @Table(name = "user_status_update")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class UserStatusUpdate {
     @Id
-    @GeneratedValue
+    @Column(columnDefinition = "uuid")
     private UUID id;
 
     @ManyToOne
@@ -24,9 +33,15 @@ public class UserStatusUpdate {
     @Column(nullable = false)
     private Status status;
 
+    @Column(columnDefinition = "text")
     private String currentSituation;
-    private LocalDateTime updateDatetime = LocalDateTime.now();
-    private String location;
+
+    private java.time.Instant updateDatetime;
+
+    @Column(columnDefinition = "geometry(Point,4326)")
+    private Point location;
+
+    public enum Status { Safe, Unsafe, Unknown }
 
     public UUID getId() {
         return id;
@@ -68,19 +83,19 @@ public class UserStatusUpdate {
         this.currentSituation = currentSituation;
     }
 
-    public LocalDateTime getUpdateDatetime() {
+    public Instant getUpdateDatetime() {
         return updateDatetime;
     }
 
-    public void setUpdateDatetime(LocalDateTime updateDatetime) {
+    public void setUpdateDatetime(Instant updateDatetime) {
         this.updateDatetime = updateDatetime;
     }
 
-    public String getLocation() {
+    public Point getLocation() {
         return location;
     }
 
-    public void setLocation(String location) {
+    public void setLocation(Point location) {
         this.location = location;
     }
 }

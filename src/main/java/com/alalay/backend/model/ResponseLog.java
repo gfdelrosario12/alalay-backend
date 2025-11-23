@@ -1,28 +1,40 @@
 package com.alalay.backend.model;
 
 import jakarta.persistence.*;
+import lombok.*;
 
-import java.time.LocalDateTime;
+import org.locationtech.jts.geom.Point;
+import java.time.Instant;
 import java.util.UUID;
 
 @Entity
 @Table(name = "response_log")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class ResponseLog {
     @Id
-    @GeneratedValue
+    @Column(columnDefinition = "uuid")
     private UUID id;
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @ManyToOne
-    @JoinColumn(name = "calamity_id", nullable = false)
+    @ManyToOne @JoinColumn(name = "calamity_id", nullable = false)
     private Calamity calamity;
 
+    @Column(columnDefinition = "text")
     private String description;
-    private String logLocation;
-    private LocalDateTime logDatetime = LocalDateTime.now();
+
+    @Column(columnDefinition = "geometry(Point,4326)")
+    private Point logLocation;
+
+    private java.time.Instant logDatetime;
+
+    @Column(columnDefinition = "text")
     private String responseDetails;
 
     public UUID getId() {
@@ -57,19 +69,19 @@ public class ResponseLog {
         this.description = description;
     }
 
-    public String getLogLocation() {
+    public Point getLogLocation() {
         return logLocation;
     }
 
-    public void setLogLocation(String logLocation) {
+    public void setLogLocation(Point logLocation) {
         this.logLocation = logLocation;
     }
 
-    public LocalDateTime getLogDatetime() {
+    public Instant getLogDatetime() {
         return logDatetime;
     }
 
-    public void setLogDatetime(LocalDateTime logDatetime) {
+    public void setLogDatetime(Instant logDatetime) {
         this.logDatetime = logDatetime;
     }
 

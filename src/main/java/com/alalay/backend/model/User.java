@@ -1,41 +1,39 @@
 package com.alalay.backend.model;
 
 import jakarta.persistence.*;
+import lombok.*;
+import org.locationtech.jts.geom.Point;
 
-import javax.management.relation.Role;
+import java.time.Instant;
 import java.time.LocalDate;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.UUID;
 
 @Entity
 @Table(name = "users")
+@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class User {
     @Id
-    @GeneratedValue
+    @Column(columnDefinition = "uuid")
     private UUID id;
 
     @Column(unique = true, nullable = false)
     private String email;
+
     private String firstName;
     private String middleName;
     private String lastName;
     private String permanentAddress;
     private Integer age;
-    private LocalDate birthDate;
+    private java.time.LocalDate birthDate;
     private String emergencyContact;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;
 
-    @ManyToMany
-    @JoinTable(
-        name = "bookmarked_users",
-        joinColumns = @JoinColumn(name = "user_id"),
-        inverseJoinColumns = @JoinColumn(name = "bookmarked_user_id")
-    )
-    private Set<User> bookmarkedUsers = new HashSet<>();
+    private Instant createdAt;
+
+    public enum Role { Admin, Rescuer, User }
 
     public UUID getId() {
         return id;
@@ -117,11 +115,11 @@ public class User {
         this.role = role;
     }
 
-    public Set<User> getBookmarkedUsers() {
-        return bookmarkedUsers;
+    public Instant getCreatedAt() {
+        return createdAt;
     }
 
-    public void setBookmarkedUsers(Set<User> bookmarkedUsers) {
-        this.bookmarkedUsers = bookmarkedUsers;
+    public void setCreatedAt(Instant createdAt) {
+        this.createdAt = createdAt;
     }
 }

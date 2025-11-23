@@ -1,23 +1,41 @@
 package com.alalay.backend.model;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import lombok.*;
+import org.locationtech.jts.geom.Geometry;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 @Entity
 @Table(name = "calamities")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Calamity {
     @Id
-    @GeneratedValue
+    @Column(columnDefinition = "uuid")
     private UUID id;
 
-    @Column(nullable = false, unique = true)
-    private LocalDateTime startDate;
+    @Column(nullable = false)
+    private java.time.Instant startDate;
+
+    @Column(columnDefinition = "text")
     private String description;
+
     private String calamityCategory;
-    private LocalDateTime reportedEndDate;
-    private String affectedAreas;
+    private java.time.Instant reportedEndDate;
+
+    // store as WKT string OR JTS geometry. Hibernate-spatial mapping if configured:
+    @Column(columnDefinition = "geometry")
+    private org.locationtech.jts.geom.Geometry affectedAreas;
+
+    private java.time.Instant createdAt;
 
     public UUID getId() {
         return id;
@@ -27,11 +45,11 @@ public class Calamity {
         this.id = id;
     }
 
-    public LocalDateTime getStartDate() {
+    public Instant getStartDate() {
         return startDate;
     }
 
-    public void setStartDate(LocalDateTime startDate) {
+    public void setStartDate(Instant startDate) {
         this.startDate = startDate;
     }
 
@@ -51,19 +69,27 @@ public class Calamity {
         this.calamityCategory = calamityCategory;
     }
 
-    public LocalDateTime getReportedEndDate() {
+    public Instant getReportedEndDate() {
         return reportedEndDate;
     }
 
-    public void setReportedEndDate(LocalDateTime reportedEndDate) {
+    public void setReportedEndDate(Instant reportedEndDate) {
         this.reportedEndDate = reportedEndDate;
     }
 
-    public String getAffectedAreas() {
+    public Geometry getAffectedAreas() {
         return affectedAreas;
     }
 
-    public void setAffectedAreas(String affectedAreas) {
+    public void setAffectedAreas(Geometry affectedAreas) {
         this.affectedAreas = affectedAreas;
+    }
+
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Instant createdAt) {
+        this.createdAt = createdAt;
     }
 }
