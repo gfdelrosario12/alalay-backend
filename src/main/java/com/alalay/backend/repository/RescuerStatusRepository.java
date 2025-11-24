@@ -30,4 +30,7 @@ public interface RescuerStatusRepository extends JpaRepository<RescuerStatus, UU
     List<RescuerStatus> findNearestAvailable(@Param("lon") double lon,
                                              @Param("lat") double lat,
                                              @Param("limit") int limit);
+
+    void deleteByRescuerId(UUID rescuerId);
+
 }
