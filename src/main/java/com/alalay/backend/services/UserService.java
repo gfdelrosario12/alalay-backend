@@ -7,8 +7,8 @@ import com.alalay.backend.repository.RescuerStatusRepository;
 import jakarta.transaction.Transactional;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
-import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -22,8 +22,9 @@ public class UserService {
     private final UserRepository userRepo;
     private final RescuerStatusRepository rescuerStatusRepo;
     private final PasswordEncoder passwordEncoder;
-    // Use proper constructor parameters
-    public UserService(UserRepository userRepo, RescuerStatusRepository rescuerStatusRepo, PasswordEncoder passwordEncoder) {
+
+    public UserService(UserRepository userRepo, RescuerStatusRepository rescuerStatusRepo,
+                       PasswordEncoder passwordEncoder) {
         this.userRepo = userRepo;
         this.rescuerStatusRepo = rescuerStatusRepo;
         this.passwordEncoder = passwordEncoder;
@@ -38,6 +39,10 @@ public class UserService {
 
     public Optional<User> findById(UUID id) {
         return userRepo.findById(id);
+    }
+
+    public User findByEmail(String email) {
+        return userRepo.findByEmail(email).orElse(null);
     }
 
     /* =============================

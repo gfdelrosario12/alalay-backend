@@ -1,110 +1,157 @@
-enum Role { RESIDENT RESCUER ADMIN }
-enum Status { SAFE UNSAFE UNKNOWN }
+# =========================
+# ENUMS
+# =========================
+
+enum Role {
+  RESIDENT
+  RESCUER
+  ADMIN
+}
+
+enum Status {
+  SAFE
+  UNSAFE
+  UNKNOWN
+}
 
 # =========================
-#         TYPES
+# TYPES (Objects)
 # =========================
 
 type User {
-    id: ID!
-    email: String!
-    firstName: String
-    middleName: String
-    lastName: String
-    permanentAddress: String
-    age: Int
-    birthDate: String
-    emergencyContact: String
-    role: Role!
-    bookmarkedUsers: [User]   # optional, resolver-based
+  id: ID!
+  email: String!
+  firstName: String
+  middleName: String
+  lastName: String
+  permanentAddress: String
+  age: Int
+  birthDate: String
+  emergencyContact: String
+  role: Role!
+
+  # Location fields added for location-based queries
+  currentLatitude: Float
+  currentLongitude: Float
+  isAvailable: Boolean
+
+  # Resolver field returning a list of other User types
+  bookmarkedUsers: [User!]
 }
 
 type Calamity {
-    id: ID!
-    startDate: String!
-    description: String
-    calamityCategory: String
-    reportedEndDate: String
-    affectedAreas: String     # returned as WKT
-    createdAt: String
+  id: ID!
+  startDate: String!
+  description: String
+  calamityCategory: String
+  reportedEndDate: String
+  affectedAreas: String
+  createdAt: String!
+  updatedAt: String
+}
+
+# Payload used for authentication responses
+type AuthPayload {
+  token: String!
+  user: User!
+
+  # Convenience flattened fields (optional, but kept for consistency)
+  id: ID!
+  email: String!
+  firstName: String
+  lastName: String
+  role: Role!
 }
 
 # =========================
-#        INPUTS
+# INPUTS
 # =========================
 
 input CreateUserInput {
-    email: String!
-    password: String!
-    firstName: String
-    middleName: String
-    lastName: String
-    permanentAddress: String
-    age: Int
-    birthDate: String
-    emergencyContact: String
-    role: Role!
+  email: String!
+  password: String!
+  firstName: String
+  middleName: String
+  lastName: String
+  permanentAddress: String
+  age: Int
+  birthDate: String
+  emergencyContact: String
+  role: Role!
 }
 
 input UpdateUserInput {
-    id: ID!
-    email: String
-    password: String
-    firstName: String
-    middleName: String
-    lastName: String
-    permanentAddress: String
-    age: Int
-    birthDate: String
-    emergencyContact: String
-    role: Role
+  id: ID!
+  email: String
+  password: String
+  firstName: String
+  middleName: String
+  lastName: String
+  permanentAddress: String
+  age: Int
+  birthDate: String
+  emergencyContact: String
+  role: Role
+}
+
+input LoginInput {
+  email: String!
+  password: String!
+}
+
+input CreateCalamityInput {
+  startDate: String!
+  description: String
+  calamityCategory: String
+  reportedEndDate: String
+  affectedAreas: String
+}
+
+input UpdateCalamityInput {
+  id: ID!
+  startDate: String
+  description: String
+  calamityCategory: String
+  reportedEndDate: String
+  affectedAreas: String
 }
 
 # =========================
-#        QUERIES
+# QUERIES (Read Operations)
 # =========================
 
 type Query {
-    users: [User!]!
-    user(id: ID!): User
-    availableRescuers(lat: Float!, lon: Float!, limit: Int): [User!]!
-    bookmarkedUsers(userId: ID!): [User!]!
-
-    calamities: [Calamity!]!
-    calamity(id: ID!): Calamity
+  users: [User!]!
+  user(id: ID!): User
+  availableRescuers(lat: Float!, lon: Float!, limit: Int = 10): [User!]!
+  bookmarkedUsers(userId: ID!): [User!]!
+  calamities: [Calamity!]!
+  calamity(id: ID!): Calamity
 }
 
 # =========================
-#       MUTATIONS
+# MUTATIONS (Write Operations)
 # =========================
 
 type Mutation {
-    bookmarkUser(userId: ID!, bookmarkedUserId: ID!): Boolean!
-    removeBookmark(userId: ID!, bookmarkedUserId: ID!): Boolean!
+  # Authentication
+  login(input: LoginInput!): AuthPayload!
 
-    createUser(input: CreateUserInput!): User!
-    updateUser(input: UpdateUserInput!): User!
-    deleteUser(id: ID!): Boolean!
+  # User Management
+  createUser(input: CreateUserInput!): User!
+  updateUser(input: UpdateUserInput!): User!
+  deleteUser(id: ID!): Boolean!
 
-    setRescuerAvailability(rescuerId: ID!, available: Boolean!): Boolean!
-    updateRescuerLocation(rescuerId: ID!, latitude: Float!, longitude: Float!): Boolean!
+  # Rescuer Management
+  setRescuerAvailability(rescuerId: ID!, available: Boolean!): Boolean!
+  updateRescuerLocation(rescuerId: ID!, latitude: Float!, longitude: Float!): Boolean!
 
-    createCalamity(
-        startDate: String!,
-        description: String,
-        calamityCategory: String,
-        reportedEndDate: String,
-        affectedAreasWKT: String
-    ): Calamity!
+  # Bookmarks
+  bookmarkUser(userId: ID!, bookmarkedUserId: ID!): Boolean!
+  removeBookmark(userId: ID!, bookmarkedUserId: ID!): Boolean!
 
-    updateCalamity(
-        id: ID!,
-        startDate: String,
-        description: String,
-        calamityCategory: String,
-        reportedEndDate: String,
-        affectedAreasWKT: String
-    ): Calamity!
-
-    deleteCalamity(id: ID!): Boolean!
+  # Calamity Management
+  createCalamity(input: CreateCalamityInput!): Calamity!
+  updateCalamity(input: UpdateCalamityInput!): Calamity!
+  deleteCalamity(id: ID!): Boolean!
 }

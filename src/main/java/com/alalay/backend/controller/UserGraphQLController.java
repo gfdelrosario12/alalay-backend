@@ -1,13 +1,20 @@
 package com.alalay.backend.controller;
 
+import com.alalay.backend.graphql.inputs.LoginInput;
+import com.alalay.backend.config.JwtService;
 import com.alalay.backend.model.User;
+import com.alalay.backend.records.AuthPayload;
 import com.alalay.backend.services.UserService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.graphql.data.method.annotation.Argument;
 import org.springframework.graphql.data.method.annotation.MutationMapping;
 import org.springframework.graphql.data.method.annotation.QueryMapping;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 
 import java.time.LocalDate;
@@ -19,10 +26,24 @@ import java.util.UUID;
 public class UserGraphQLController {
     private final UserService userService;
     private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
+    private final AuthenticationManager authenticationManager;
 
-    public UserGraphQLController(UserService userService, PasswordEncoder passwordEncoder) {
+    @Autowired
+    private HttpServletRequest request;
+
+    @Autowired
+    private HttpServletResponse response;
+
+    @Autowired
+    public UserGraphQLController(UserService userService,
+                                 PasswordEncoder passwordEncoder,
+                                 JwtService jwtService,
+                                 AuthenticationManager authenticationManager) {
         this.userService = userService;
         this.passwordEncoder = passwordEncoder;
+        this.jwtService = jwtService;
+        this.authenticationManager = authenticationManager;
     }
 
     /* =============================
@@ -49,11 +70,9 @@ public class UserGraphQLController {
                 throw new IllegalArgumentException("Role is required");
             }
 
-            String hashedPassword = passwordEncoder.encode(input.password());
-
             return userService.createUser(
                     input.email(),
-                    hashedPassword,
+                    input.password(),
                     input.firstName(),
                     input.middleName(),
                     input.lastName(),
@@ -64,8 +83,7 @@ public class UserGraphQLController {
                     input.role()
             );
         } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException("Failed to create user: " + e.getMessage());
+            throw new RuntimeException("Failed to create user: " + e.getMessage(), e);
         }
     }
 
@@ -74,12 +92,10 @@ public class UserGraphQLController {
         requireAuthentication();
         try {
             LocalDate birthDate = parseDateSafe(input.birthDate());
-            String hashedPassword = input.password() != null ? passwordEncoder.encode(input.password()) : null;
-
             return userService.updateUser(
                     input.id(),
                     input.email(),
-                    hashedPassword,
+                    input.password(),
                     input.firstName(),
                     input.middleName(),
                     input.lastName(),
@@ -90,8 +106,7 @@ public class UserGraphQLController {
                     input.role()
             );
         } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException("Failed to update user: " + e.getMessage());
+            throw new RuntimeException("Failed to update user: " + e.getMessage(), e);
         }
     }
 
@@ -101,10 +116,34 @@ public class UserGraphQLController {
         try {
             return userService.deleteUser(id);
         } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException("Failed to delete user: " + e.getMessage());
+            throw new RuntimeException("Failed to delete user: " + e.getMessage(), e);
         }
     }
+
+    /* =============================
+       LOGIN (returns token + user)
+       ============================= */
+    @MutationMapping
+    public AuthPayload login(@Argument LoginInput input) {
+        User user = userService.findByEmail(input.getEmail());
+        if (user == null || !userService.verifyPassword(input.getPassword(), user.getPassword())) {
+            throw new RuntimeException("Invalid email or password");
+        }
+
+        String token = jwtService.generateToken(user.getId(), user.getEmail(), user.getRole().name());
+        response.addHeader("Set-Cookie", String.format("token=%s; HttpOnly; Path=/; SameSite=Lax", token));
+
+        return new AuthPayload(
+                token,
+                user,
+                user.getId(),
+                user.getEmail(),
+                user.getFirstName(),
+                user.getLastName(),
+                user.getRole()
+        );
+    }
+
 
     /* =============================
        HELPER
@@ -121,7 +160,7 @@ public class UserGraphQLController {
         try {
             return LocalDate.parse(dateStr);
         } catch (DateTimeParseException e) {
-            throw new IllegalArgumentException("Invalid date format, expected yyyy-MM-dd");
+            throw new IllegalArgumentException("Invalid date format, expected yyyy-MM-dd", e);
         }
     }
 
@@ -153,5 +192,10 @@ public class UserGraphQLController {
             String birthDate,
             String emergencyContact,
             User.Role role
-    ){}
+    ) {}
+
+    /* =============================
+       LOGIN RESPONSE
+       ============================= */
+    public record LoginResponse(String token, User user) {}
 }
