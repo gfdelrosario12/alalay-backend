@@ -41,7 +41,7 @@ public class UserStatusUpdate {
     @Column(columnDefinition = "geometry(Point,4326)")
     private Point location;
 
-    public enum Status { Safe, Unsafe, Unknown }
+    public enum Status { SAFE, UNSAFE, UNKNOWN }
 
     public UUID getId() {
         return id;

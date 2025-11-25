@@ -8,6 +8,7 @@ import jakarta.transaction.Transactional;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -20,16 +21,17 @@ public class UserService {
 
     private final UserRepository userRepo;
     private final RescuerStatusRepository rescuerStatusRepo;
-
-    public UserService(UserRepository userRepo, RescuerStatusRepository rescuerStatusRepo) {
+    private final PasswordEncoder passwordEncoder;
+    // Use proper constructor parameters
+    public UserService(UserRepository userRepo, RescuerStatusRepository rescuerStatusRepo, PasswordEncoder passwordEncoder) {
         this.userRepo = userRepo;
         this.rescuerStatusRepo = rescuerStatusRepo;
+        this.passwordEncoder = passwordEncoder;
     }
 
     /* =============================
        BASIC FINDERS
        ============================= */
-
     public List<User> findAll() {
         return userRepo.findAll();
     }
@@ -38,18 +40,13 @@ public class UserService {
         return userRepo.findById(id);
     }
 
-    public List<User> findNearestAvailableRescuers(double lat, double lon, int limit) {
-        return userRepo.findNearestAvailableRescuers(lat, lon, limit);
-    }
-
-
     /* =============================
        CREATE USER
        ============================= */
-
     @Transactional
     public User createUser(
             String email,
+            String rawPassword,
             String firstName,
             String middleName,
             String lastName,
@@ -59,10 +56,12 @@ public class UserService {
             String emergencyContact,
             User.Role role
     ) {
+        String hashedPassword = passwordEncoder.encode(rawPassword);
 
         User user = User.builder()
                 .id(UUID.randomUUID())
                 .email(email)
+                .password(hashedPassword)
                 .firstName(firstName)
                 .middleName(middleName)
                 .lastName(lastName)
@@ -76,30 +75,27 @@ public class UserService {
 
         User saved = userRepo.save(user);
 
-        // If this user is a Rescuer → auto-create status record
-        if (role == User.Role.Rescuer) {
+        if (role == User.Role.RESCUER) {
             RescuerStatus status = RescuerStatus.builder()
                     .id(UUID.randomUUID())
                     .rescuer(saved)
                     .isAvailable(true)
                     .lastKnownLocation(null)
                     .build();
-
             rescuerStatusRepo.save(status);
         }
 
         return saved;
     }
 
-
     /* =============================
        UPDATE USER
        ============================= */
-
     @Transactional
     public User updateUser(
             UUID id,
             String email,
+            String rawPassword,
             String firstName,
             String middleName,
             String lastName,
@@ -109,11 +105,11 @@ public class UserService {
             String emergencyContact,
             User.Role role
     ) {
-
         User user = userRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         if (email != null) user.setEmail(email);
+        if (rawPassword != null) user.setPassword(passwordEncoder.encode(rawPassword));
         if (firstName != null) user.setFirstName(firstName);
         if (middleName != null) user.setMiddleName(middleName);
         if (lastName != null) user.setLastName(lastName);
@@ -126,33 +122,24 @@ public class UserService {
         return userRepo.save(user);
     }
 
-
     /* =============================
        DELETE USER
        ============================= */
-
     @Transactional
     public boolean deleteUser(UUID id) {
-
         if (!userRepo.existsById(id)) return false;
-
-        // Delete rescuer status if needed
         rescuerStatusRepo.deleteByRescuerId(id);
-
         userRepo.deleteById(id);
         return true;
     }
 
-
     /* =============================
-       RESCUER STATUS UPDATES
+       RESCUER STATUS
        ============================= */
-
     @Transactional
     public void setRescuerAvailability(UUID rescuerId, boolean available) {
         RescuerStatus status = rescuerStatusRepo.findByRescuerId(rescuerId)
                 .orElseThrow(() -> new RuntimeException("Rescuer status not found"));
-
         status.setAvailable(available);
         rescuerStatusRepo.save(status);
     }
@@ -161,12 +148,16 @@ public class UserService {
     public void updateRescuerLocation(UUID rescuerId, double latitude, double longitude) {
         RescuerStatus status = rescuerStatusRepo.findByRescuerId(rescuerId)
                 .orElseThrow(() -> new RuntimeException("Rescuer status not found"));
-
         GeometryFactory gf = new GeometryFactory();
-        status.setLastKnownLocation(
-                gf.createPoint(new Coordinate(longitude, latitude))
-        );
-
+        status.setLastKnownLocation(gf.createPoint(new Coordinate(longitude, latitude)));
         rescuerStatusRepo.save(status);
     }
+
+    /* =============================
+       VERIFY PASSWORD
+       ============================= */
+    public boolean verifyPassword(String rawPassword, String hashedPassword) {
+        return passwordEncoder.matches(rawPassword, hashedPassword);
+    }
+
 }

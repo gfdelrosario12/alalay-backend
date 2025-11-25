@@ -1,5 +1,5 @@
-enum Role { Admin Rescuer User }
-enum Status { Safe Unsafe Unknown }
+enum Role { RESIDENT RESCUER ADMIN }
+enum Status { SAFE UNSAFE UNKNOWN }
 
 # =========================
 #         TYPES
@@ -35,6 +35,7 @@ type Calamity {
 
 input CreateUserInput {
     email: String!
+    password: String!
     firstName: String
     middleName: String
     lastName: String
@@ -48,6 +49,7 @@ input CreateUserInput {
 input UpdateUserInput {
     id: ID!
     email: String
+    password: String
     firstName: String
     middleName: String
     lastName: String
@@ -63,20 +65,11 @@ input UpdateUserInput {
 # =========================
 
 type Query {
-
-    # ---- USER ----
     users: [User!]!
     user(id: ID!): User
-
-    availableRescuers(
-        lat: Float!
-        lon: Float!
-        limit: Int
-    ): [User!]!
-
+    availableRescuers(lat: Float!, lon: Float!, limit: Int): [User!]!
     bookmarkedUsers(userId: ID!): [User!]!
 
-    # ---- CALAMITY ----
     calamities: [Calamity!]!
     calamity(id: ID!): Calamity
 }
@@ -86,36 +79,16 @@ type Query {
 # =========================
 
 type Mutation {
+    bookmarkUser(userId: ID!, bookmarkedUserId: ID!): Boolean!
+    removeBookmark(userId: ID!, bookmarkedUserId: ID!): Boolean!
 
-    # ---- BOOKMARKS ----
-    bookmarkUser(
-        userId: ID!,
-        bookmarkedUserId: ID!
-    ): Boolean!
-
-    removeBookmark(
-        userId: ID!,
-        bookmarkedUserId: ID!
-    ): Boolean!
-
-    # ---- USER CRUD ----
     createUser(input: CreateUserInput!): User!
     updateUser(input: UpdateUserInput!): User!
     deleteUser(id: ID!): Boolean!
 
-    # ---- RESCUER STATUS & LOCATION ----
-    setRescuerAvailability(
-        rescuerId: ID!,
-        available: Boolean!
-    ): Boolean!
+    setRescuerAvailability(rescuerId: ID!, available: Boolean!): Boolean!
+    updateRescuerLocation(rescuerId: ID!, latitude: Float!, longitude: Float!): Boolean!
 
-    updateRescuerLocation(
-        rescuerId: ID!,
-        latitude: Float!,
-        longitude: Float!
-    ): Boolean!
-
-    # ---- CALAMITY CRUD ----
     createCalamity(
         startDate: String!,
         description: String,
