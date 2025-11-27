@@ -1,6 +1,7 @@
 package com.alalay.backend.services;
 
 import com.alalay.backend.model.Calamity;
+import com.alalay.backend.model.Calamity.Status;
 import com.alalay.backend.repository.CalamityRepository;
 import jakarta.transaction.Transactional;
 import org.locationtech.jts.geom.Geometry;
@@ -32,7 +33,6 @@ public class CalamityService {
         return calamityRepo.findById(id);
     }
 
-
     /* =============================
        CREATE CALAMITY
        ============================= */
@@ -42,7 +42,8 @@ public class CalamityService {
             String description,
             String calamityCategory,
             Instant reportedEndDate,
-            String affectedAreasWKT // WKT string
+            String affectedAreasWKT,
+            Status status // new field
     ) {
         Geometry geom = null;
         if (affectedAreasWKT != null) {
@@ -61,14 +62,14 @@ public class CalamityService {
                 .reportedEndDate(reportedEndDate)
                 .affectedAreas(geom)
                 .createdAt(Instant.now())
+                .status(status != null ? status : Status.STARTED)
                 .build();
 
         return calamityRepo.save(calamity);
     }
 
-
     /* =============================
-       UPDATE CALAMITY (Partial)
+       UPDATE CALAMITY
        ============================= */
     @Transactional
     public Calamity updateCalamity(
@@ -77,7 +78,8 @@ public class CalamityService {
             String description,
             String calamityCategory,
             Instant reportedEndDate,
-            String affectedAreasWKT
+            String affectedAreasWKT,
+            Status status // new field
     ) {
         Calamity calamity = calamityRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Calamity not found"));
@@ -86,6 +88,7 @@ public class CalamityService {
         if (description != null) calamity.setDescription(description);
         if (calamityCategory != null) calamity.setCalamityCategory(calamityCategory);
         if (reportedEndDate != null) calamity.setReportedEndDate(reportedEndDate);
+        if (status != null) calamity.setStatus(status);
 
         if (affectedAreasWKT != null) {
             try {
@@ -99,25 +102,19 @@ public class CalamityService {
         return calamityRepo.save(calamity);
     }
 
-
     /* =============================
        DELETE CALAMITY
        ============================= */
     @Transactional
     public boolean deleteCalamity(UUID id) {
         if (!calamityRepo.existsById(id)) return false;
-
         calamityRepo.deleteById(id);
         return true;
     }
 
-    /* =============================
-       GET CALAMITY BY ID
-       ============================= */
     @Transactional
     public Calamity getCalamityById(UUID id) {
         return calamityRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Calamity not found with id: " + id));
     }
-
 }

@@ -9,6 +9,8 @@ enum Role {
 }
 
 enum Status {
+  STARTED
+  DONE
   SAFE
   UNSAFE
   UNKNOWN
@@ -55,7 +57,8 @@ type Calamity {
   description: String
   calamityCategory: String
   reportedEndDate: String
-  affectedAreas: String
+  affectedAreasWKT: String
+  status: Status!
   createdAt: String!
   updatedAt: String
 }
@@ -142,12 +145,17 @@ input LoginInput {
   password: String!
 }
 
+# =========================
+# Calamity Inputs
+# =========================
+
 input CreateCalamityInput {
   startDate: String!
   description: String
   calamityCategory: String
   reportedEndDate: String
-  affectedAreas: String
+  affectedAreasWKT: String       # <-- matches Java
+  status: Status
 }
 
 input UpdateCalamityInput {
@@ -156,7 +164,8 @@ input UpdateCalamityInput {
   description: String
   calamityCategory: String
   reportedEndDate: String
-  affectedAreas: String
+  affectedAreasWKT: String       # <-- matches Java
+  status: Status
 }
 
 input UpdateUserStatusInput {
@@ -178,7 +187,7 @@ type Query {
   getResponseLogsByCalamity(calamityId: ID!): [ResponseLog!]!
 
   getUser(id: ID!): User
-  getUsers: [User!]   # <--- this is the correct field
+  getUsers: [User!]
 
   getCalamity(id: ID!): Calamity
   getCalamities: [Calamity!]

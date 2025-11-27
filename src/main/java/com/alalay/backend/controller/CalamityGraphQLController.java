@@ -1,7 +1,9 @@
 package com.alalay.backend.controller;
 
 import com.alalay.backend.graphql.inputs.CreateCalamityInput;
+import com.alalay.backend.graphql.inputs.UpdateCalamityInput;
 import com.alalay.backend.model.Calamity;
+import com.alalay.backend.model.Calamity.Status;
 import com.alalay.backend.services.CalamityService;
 import org.springframework.graphql.data.method.annotation.Argument;
 import org.springframework.graphql.data.method.annotation.MutationMapping;
@@ -15,64 +17,58 @@ import java.util.UUID;
 
 @Controller
 public class CalamityGraphQLController {
+
     private final CalamityService calamityService;
 
     public CalamityGraphQLController(CalamityService calamityService) {
         this.calamityService = calamityService;
     }
 
-/* =============================
-   QUERIES
-   ============================= */
-
-    @QueryMapping
-    public List<Calamity> calamities() {
+    /* =============================
+       QUERIES
+       ============================= */
+    @QueryMapping(name = "getCalamities")
+    public List<Calamity> getCalamities() {
         return calamityService.findAll();
     }
 
-    @QueryMapping
-    public Calamity calamity(@Argument UUID id) {
+    @QueryMapping(name = "getCalamity")
+    public Calamity getCalamity(@Argument UUID id) {
         return calamityService.findById(id).orElse(null);
     }
 
-
-/* =============================
-   MUTATIONS
-   ============================= */
-
+    /* =============================
+       MUTATIONS
+       ============================= */
     @MutationMapping
-    public Calamity createCalamity(@Argument("input") CreateCalamityInput input) {
+    public Calamity createCalamity(@Argument CreateCalamityInput input) {
         Instant startInstant = parseInstantSafe(input.startDate(), "startDate");
         Instant endInstant = parseInstantSafe(input.reportedEndDate(), "reportedEndDate");
+        Status status = input.status() != null ? input.status() : Status.STARTED;
 
         return calamityService.createCalamity(
                 startInstant,
                 input.description(),
                 input.calamityCategory(),
                 endInstant,
-                input.affectedAreasWKT()
+                input.affectedAreasWKT(),
+                status
         );
     }
 
     @MutationMapping
-    public Calamity updateCalamity(
-            @Argument UUID id,
-            @Argument String startDate,
-            @Argument String description,
-            @Argument String calamityCategory,
-            @Argument String reportedEndDate,
-            @Argument String affectedAreasWKT
-    ) {
-        Instant startInstant = parseInstantSafe(startDate, "startDate");
-        Instant endInstant = parseInstantSafe(reportedEndDate, "reportedEndDate");
+    public Calamity updateCalamity(@Argument UpdateCalamityInput input) {
+        Instant startInstant = parseInstantSafe(input.startDate(), "startDate");
+        Instant endInstant = parseInstantSafe(input.reportedEndDate(), "reportedEndDate");
 
         return calamityService.updateCalamity(
-                id,
+                UUID.fromString(input.id()),
                 startInstant,
-                description,
-                calamityCategory,
+                input.description(),
+                input.calamityCategory(),
                 endInstant,
-                affectedAreasWKT
+                input.affectedAreasWKT(),
+                input.status()
         );
     }
 
@@ -81,6 +77,9 @@ public class CalamityGraphQLController {
         return calamityService.deleteCalamity(id);
     }
 
+    /* =============================
+       HELPER
+       ============================= */
     private Instant parseInstantSafe(String value, String fieldName) {
         if (value == null || value.isBlank()) return null;
         try {
@@ -89,5 +88,4 @@ public class CalamityGraphQLController {
             throw new IllegalArgumentException("Invalid date format for " + fieldName + ". Expected ISO-8601 string.", e);
         }
     }
-
 }

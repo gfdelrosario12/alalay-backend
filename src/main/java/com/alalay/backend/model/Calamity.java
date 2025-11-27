@@ -1,9 +1,6 @@
 package com.alalay.backend.model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.*;
 import org.locationtech.jts.geom.Geometry;
 
@@ -18,24 +15,40 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 public class Calamity {
+
     @Id
     @Column(columnDefinition = "uuid")
     private UUID id;
 
     @Column(nullable = false)
-    private java.time.Instant startDate;
+    private Instant startDate;
 
     @Column(columnDefinition = "text")
     private String description;
 
     private String calamityCategory;
-    private java.time.Instant reportedEndDate;
+
+    private Instant reportedEndDate;
 
     // store as WKT string OR JTS geometry. Hibernate-spatial mapping if configured:
     @Column(columnDefinition = "geometry")
-    private org.locationtech.jts.geom.Geometry affectedAreas;
+    private Geometry affectedAreas;
 
-    private java.time.Instant createdAt;
+    private Instant createdAt;
+
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private Status status = Status.STARTED;  // <-- default value for existing rows
+
+
+    public enum Status {
+        STARTED,
+        DONE
+    }
+
+    // =========================
+    // Getters & Setters
+    // =========================
 
     public UUID getId() {
         return id;
@@ -92,4 +105,18 @@ public class Calamity {
     public void setCreatedAt(Instant createdAt) {
         this.createdAt = createdAt;
     }
+
+    public Status getStatus() {
+        return status;
+    }
+
+    public void setStatus(Status status) {
+        this.status = status;
+    }
+
+    // Add this getter for GraphQL
+    public String getAffectedAreasWKT() {
+        return affectedAreas != null ? affectedAreas.toText() : null;
+    }
+
 }
