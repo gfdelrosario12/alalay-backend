@@ -6,7 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.awt.*;
+import org.locationtech.jts.geom.Point;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -98,4 +98,5 @@ public class UserStatusUpdate {
     public void setLocation(Point location) {
         this.location = location;
     }
+
 }

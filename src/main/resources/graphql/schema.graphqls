@@ -28,11 +28,14 @@ type User {
   age: Int
   birthDate: String
   emergencyContact: String
+  phoneNumber: String
   role: Role!
 
-  # Location fields added for location-based queries
+  # Location fields for current location
   currentLatitude: Float
   currentLongitude: Float
+
+  # For rescuers
   isAvailable: Boolean
 
   # Resolver field returning a list of other User types
@@ -50,12 +53,22 @@ type Calamity {
   updatedAt: String
 }
 
-# Payload used for authentication responses
+type UserStatusUpdate {
+  id: ID!
+  user: User!
+  calamity: Calamity!
+  status: Status!
+  currentSituation: String
+  updateDatetime: String!
+  latitude: Float
+  longitude: Float
+}
+
 type AuthPayload {
   token: String!
   user: User!
 
-  # Convenience flattened fields (optional, but kept for consistency)
+  # Flattened user fields for convenience
   id: ID!
   email: String!
   firstName: String
@@ -77,6 +90,7 @@ input CreateUserInput {
   age: Int
   birthDate: String
   emergencyContact: String
+  phoneNumber: String
   role: Role!
 }
 
@@ -91,6 +105,7 @@ input UpdateUserInput {
   age: Int
   birthDate: String
   emergencyContact: String
+  phoneNumber: String
   role: Role
 }
 
@@ -116,6 +131,15 @@ input UpdateCalamityInput {
   affectedAreas: String
 }
 
+input UpdateUserStatusInput {
+  userId: ID!
+  calamityId: ID!
+  status: Status!
+  currentSituation: String
+  latitude: Float
+  longitude: Float
+}
+
 # =========================
 # QUERIES (Read Operations)
 # =========================
@@ -127,6 +151,7 @@ type Query {
   bookmarkedUsers(userId: ID!): [User!]!
   calamities: [Calamity!]!
   calamity(id: ID!): Calamity
+  userStatusUpdates(userId: ID!, calamityId: ID!): [UserStatusUpdate!]!
 }
 
 # =========================
@@ -142,6 +167,10 @@ type Mutation {
   updateUser(input: UpdateUserInput!): User!
   deleteUser(id: ID!): Boolean!
 
+  # User Location & Phone Number Updates
+  updateUserLocation(userId: ID!, latitude: Float!, longitude: Float!): Boolean!
+  updateUserPhoneNumber(userId: ID!, phoneNumber: String!): Boolean!
+
   # Rescuer Management
   setRescuerAvailability(rescuerId: ID!, available: Boolean!): Boolean!
   updateRescuerLocation(rescuerId: ID!, latitude: Float!, longitude: Float!): Boolean!
@@ -154,4 +183,7 @@ type Mutation {
   createCalamity(input: CreateCalamityInput!): Calamity!
   updateCalamity(input: UpdateCalamityInput!): Calamity!
   deleteCalamity(id: ID!): Boolean!
+
+  # Status Management
+  updateUserStatus(input: UpdateUserStatusInput!): UserStatusUpdate!
 }

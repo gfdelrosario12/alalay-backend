@@ -7,6 +7,7 @@ import com.alalay.backend.repository.RescuerStatusRepository;
 import jakarta.transaction.Transactional;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.Point;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -22,12 +23,14 @@ public class UserService {
     private final UserRepository userRepo;
     private final RescuerStatusRepository rescuerStatusRepo;
     private final PasswordEncoder passwordEncoder;
+    private final GeometryFactory geometryFactory;
 
     public UserService(UserRepository userRepo, RescuerStatusRepository rescuerStatusRepo,
                        PasswordEncoder passwordEncoder) {
         this.userRepo = userRepo;
         this.rescuerStatusRepo = rescuerStatusRepo;
         this.passwordEncoder = passwordEncoder;
+        this.geometryFactory = new GeometryFactory();
     }
 
     /* =============================
@@ -59,6 +62,7 @@ public class UserService {
             Integer age,
             LocalDate birthDate,
             String emergencyContact,
+            String phoneNumber,
             User.Role role
     ) {
         String hashedPassword = passwordEncoder.encode(rawPassword);
@@ -74,6 +78,8 @@ public class UserService {
                 .age(age)
                 .birthDate(birthDate)
                 .emergencyContact(emergencyContact)
+                .phoneNumber(phoneNumber)
+                .currentLocation(null)
                 .role(role)
                 .createdAt(Instant.now())
                 .build();
@@ -108,6 +114,7 @@ public class UserService {
             Integer age,
             LocalDate birthDate,
             String emergencyContact,
+            String phoneNumber,
             User.Role role
     ) {
         User user = userRepo.findById(id)
@@ -122,6 +129,7 @@ public class UserService {
         if (age != null) user.setAge(age);
         if (birthDate != null) user.setBirthDate(birthDate);
         if (emergencyContact != null) user.setEmergencyContact(emergencyContact);
+        if (phoneNumber != null) user.setPhoneNumber(phoneNumber);
         if (role != null) user.setRole(role);
 
         return userRepo.save(user);
@@ -139,6 +147,34 @@ public class UserService {
     }
 
     /* =============================
+       LOCATION & PHONE NUMBER UPDATES
+       ============================= */
+    @Transactional
+    public void updateUserLocation(UUID userId, double latitude, double longitude) {
+        User user = userRepo.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Point location = geometryFactory.createPoint(new Coordinate(longitude, latitude));
+        user.setCurrentLocation(location);
+        userRepo.save(user);
+    }
+
+    @Transactional
+    public void updateUserPhoneNumber(UUID userId, String phoneNumber) {
+        User user = userRepo.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        user.setPhoneNumber(phoneNumber);
+        userRepo.save(user);
+    }
+
+    public Point getUserLocation(UUID userId) {
+        User user = userRepo.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        return user.getCurrentLocation();
+    }
+
+    /* =============================
        RESCUER STATUS
        ============================= */
     @Transactional
@@ -146,15 +182,6 @@ public class UserService {
         RescuerStatus status = rescuerStatusRepo.findByRescuerId(rescuerId)
                 .orElseThrow(() -> new RuntimeException("Rescuer status not found"));
         status.setAvailable(available);
-        rescuerStatusRepo.save(status);
-    }
-
-    @Transactional
-    public void updateRescuerLocation(UUID rescuerId, double latitude, double longitude) {
-        RescuerStatus status = rescuerStatusRepo.findByRescuerId(rescuerId)
-                .orElseThrow(() -> new RuntimeException("Rescuer status not found"));
-        GeometryFactory gf = new GeometryFactory();
-        status.setLastKnownLocation(gf.createPoint(new Coordinate(longitude, latitude)));
         rescuerStatusRepo.save(status);
     }
 

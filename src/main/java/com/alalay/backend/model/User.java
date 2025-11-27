@@ -30,6 +30,14 @@
         private java.time.LocalDate birthDate;
         private String emergencyContact;
 
+        // Add these fields to your User entity
+
+        @Column(name = "phone_number")
+        private String phoneNumber;
+
+        @Column(name = "current_location", columnDefinition = "geometry(Point,4326)")
+        private Point currentLocation;
+
         @Enumerated(EnumType.STRING)
         @Column(nullable = false)
         private Role role;
@@ -37,6 +45,32 @@
         private Instant createdAt;
 
         public enum Role { ADMIN, RESCUER, RESIDENT }
+
+        // Add getters and setters
+        public String getPhoneNumber() {
+            return phoneNumber;
+        }
+
+        public void setPhoneNumber(String phoneNumber) {
+            this.phoneNumber = phoneNumber;
+        }
+
+        public Point getCurrentLocation() {
+            return currentLocation;
+        }
+
+        public void setCurrentLocation(Point currentLocation) {
+            this.currentLocation = currentLocation;
+        }
+
+        // Add these to your GraphQL resolver if you need to expose lat/lon separately
+        public Double getCurrentLatitude() {
+            return currentLocation != null ? currentLocation.getY() : null;
+        }
+
+        public Double getCurrentLongitude() {
+            return currentLocation != null ? currentLocation.getX() : null;
+        }
 
         public UUID getId() {
             return id;

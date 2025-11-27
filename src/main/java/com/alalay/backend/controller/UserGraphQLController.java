@@ -24,6 +24,7 @@ import java.util.UUID;
 
 @Controller
 public class UserGraphQLController {
+
     private final UserService userService;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
@@ -36,19 +37,16 @@ public class UserGraphQLController {
     private HttpServletResponse response;
 
     @Autowired
-    public UserGraphQLController(UserService userService,
-                                 PasswordEncoder passwordEncoder,
-                                 JwtService jwtService,
-                                 AuthenticationManager authenticationManager) {
+    public UserGraphQLController(UserService userService, PasswordEncoder passwordEncoder,
+                                 JwtService jwtService, AuthenticationManager authenticationManager) {
         this.userService = userService;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.authenticationManager = authenticationManager;
     }
 
-    /* =============================
-       QUERIES
-       ============================= */
+    /* ============================= QUERIES ============================= */
+
     @QueryMapping
     public List<User> users() {
         return userService.findAll();
@@ -59,9 +57,8 @@ public class UserGraphQLController {
         return userService.findById(id).orElse(null);
     }
 
-    /* =============================
-       MUTATIONS
-       ============================= */
+    /* ============================= MUTATIONS ============================= */
+
     @MutationMapping
     public User createUser(@Argument CreateUserInput input) {
         try {
@@ -80,6 +77,7 @@ public class UserGraphQLController {
                     input.age(),
                     birthDate,
                     input.emergencyContact(),
+                    input.phoneNumber(),
                     input.role()
             );
         } catch (Exception e) {
@@ -92,6 +90,7 @@ public class UserGraphQLController {
         requireAuthentication();
         try {
             LocalDate birthDate = parseDateSafe(input.birthDate());
+
             return userService.updateUser(
                     input.id(),
                     input.email(),
@@ -103,6 +102,7 @@ public class UserGraphQLController {
                     input.age(),
                     birthDate,
                     input.emergencyContact(),
+                    input.phoneNumber(),
                     input.role()
             );
         } catch (Exception e) {
@@ -120,9 +120,21 @@ public class UserGraphQLController {
         }
     }
 
-    /* =============================
-       LOGIN (returns token + user)
-       ============================= */
+    /* ============================= LOCATION & PHONE NUMBER UPDATES ============================= */
+
+    @MutationMapping
+    public boolean updateUserLocation(@Argument UUID userId, @Argument Double latitude, @Argument Double longitude) {
+        requireAuthentication();
+        try {
+            userService.updateUserLocation(userId, latitude, longitude);
+            return true;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to update location: " + e.getMessage(), e);
+        }
+    }
+
+    /* ============================= LOGIN (returns token + user) ============================= */
+
     @MutationMapping
     public AuthPayload login(@Argument LoginInput input) {
         User user = userService.findByEmail(input.getEmail());
@@ -131,7 +143,8 @@ public class UserGraphQLController {
         }
 
         String token = jwtService.generateToken(user.getId(), user.getEmail(), user.getRole().name());
-        response.addHeader("Set-Cookie", String.format("token=%s; HttpOnly; Path=/; SameSite=Lax", token));
+        response.addHeader("Set-Cookie",
+                String.format("token=%s; HttpOnly; Path=/; SameSite=Lax", token));
 
         return new AuthPayload(
                 token,
@@ -144,10 +157,8 @@ public class UserGraphQLController {
         );
     }
 
+    /* ============================= HELPER ============================= */
 
-    /* =============================
-       HELPER
-       ============================= */
     private void requireAuthentication() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated()) {
@@ -164,9 +175,8 @@ public class UserGraphQLController {
         }
     }
 
-    /* =============================
-       INPUT TYPES
-       ============================= */
+    /* ============================= INPUT TYPES ============================= */
+
     public record CreateUserInput(
             String email,
             String password,
@@ -177,6 +187,7 @@ public class UserGraphQLController {
             Integer age,
             String birthDate,
             String emergencyContact,
+            String phoneNumber,
             User.Role role
     ) {}
 
@@ -191,11 +202,7 @@ public class UserGraphQLController {
             Integer age,
             String birthDate,
             String emergencyContact,
+            String phoneNumber,
             User.Role role
     ) {}
-
-    /* =============================
-       LOGIN RESPONSE
-       ============================= */
-    public record LoginResponse(String token, User user) {}
 }
