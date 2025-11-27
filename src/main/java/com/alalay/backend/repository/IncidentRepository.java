@@ -2,6 +2,8 @@ package com.alalay.backend.repository;
 
 import com.alalay.backend.model.Incident;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -23,8 +25,9 @@ public interface IncidentRepository extends JpaRepository<Incident, UUID> {
     List<Incident> findByRescuer_Id(UUID rescuerId);
 
 
-    // Find all incidents for a calamity
-    List<Incident> findByCalamityId(UUID calamityId);
+    @Query("SELECT i FROM Incident i WHERE i.calamity.id = :calamityId")
+    List<Incident> findByCalamityId(@Param("calamityId") UUID calamityId);
+
 
     // Find incidents assigned / unassigned
     List<Incident> findByRescueAssigned(boolean rescueAssigned);

@@ -1,7 +1,6 @@
 # =========================
 # ENUMS
 # =========================
-
 enum Role {
   RESIDENT
   RESCUER
@@ -16,10 +15,17 @@ enum Status {
   UNKNOWN
 }
 
+enum OtherStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+  OTHER
+}
+
 # =========================
 # TYPES (Objects)
 # =========================
-
 type User {
   id: ID!
   email: String!
@@ -29,19 +35,14 @@ type User {
   permanentAddress: String
   age: Int
   birthDate: String
-
   emergencyContactName: String
   emergencyContactDetails: String
-
   phoneNumber: String
   role: Role!
-
   currentLatitude: Float
   currentLongitude: Float
-
   isAvailable: Boolean
   bookmarkedUsers: [User!]
-
   createdAt: String
 }
 
@@ -71,7 +72,6 @@ type UserStatusUpdate {
 type AuthPayload {
   token: String!
   user: User!
-
   id: ID!
   email: String!
   firstName: String
@@ -95,23 +95,38 @@ type ResponseLog {
 # =========================
 # INCIDENT TYPE
 # =========================
-
 type Incident {
   id: ID!
+  calamityId: ID
+  rescuerId: ID
+  calamity: Calamity
+  rescuer: User
   description: String!
-  calamity: Calamity!
-  rescuer: User        # Made nullable
   latitude: Float
   longitude: Float
   otherAffectedMembers: String
   otherImportantDetails: String
-  createdAt: String!
+  detectedDatetime: String!
 }
 
 # =========================
-# INPUTS
+# RESCUE TASK TYPE (nullable IDs)
 # =========================
+type RescueTask {
+  id: ID!
+  incidentId: ID               # nullable
+  rescuerId: ID                # nullable
+  incident: Incident!          # nested object
+  assignedRescuer: User!       # nested object
+  notes: String
+  status: OtherStatus!
+  assignedDatetime: String
+  completionDatetime: String
+}
 
+# =========================
+# INPUT TYPES
+# =========================
 input CreateUserInput {
   email: String!
   password: String!
@@ -148,10 +163,6 @@ input LoginInput {
   password: String!
 }
 
-# =========================
-# Calamity Inputs
-# =========================
-
 input CreateCalamityInput {
   startDate: String!
   description: String
@@ -180,72 +191,66 @@ input UpdateUserStatusInput {
   longitude: Float
 }
 
-# =========================
-# Incident Input
-# =========================
-
 input CreateIncidentInput {
   description: String!
   calamityId: ID!
-  rescuerId: ID!       # was reporterId
+  rescuerId: ID
   latitude: Float
   longitude: Float
   otherAffectedMembers: String
   otherImportantDetails: String
 }
 
+input CreateRescueTaskInput {
+  incidentId: ID!
+  rescuerId: ID!
+  notes: String
+  status: OtherStatus!
+}
+
+input UpdateRescueTaskStatusInput {
+  id: ID!
+  status: OtherStatus!
+  completionDatetime: String
+}
+
 # =========================
 # QUERIES
 # =========================
-
 type Query {
   getResponseLogs: [ResponseLog!]!
   getResponseLogsByUser(userId: ID!): [ResponseLog!]!
   getResponseLogsByCalamity(calamityId: ID!): [ResponseLog!]!
-
   getUser(id: ID!): User
   getUsers: [User!]
-
   getCalamity(id: ID!): Calamity
   getCalamities: [Calamity!]
-
   getUserStatusUpdates(userId: ID!): [UserStatusUpdate!]
-
   getIncidents: [Incident!]!
   getIncidentsByCalamity(calamityId: ID!): [Incident!]!
+  rescueTasks(status: OtherStatus): [RescueTask!]!
 }
 
 # =========================
 # MUTATIONS
 # =========================
-
 type Mutation {
   login(input: LoginInput!): AuthPayload!
-
   createUser(input: CreateUserInput!): User!
   updateUser(input: UpdateUserInput!): User!
   deleteUser(id: ID!): Boolean!
-
-  changePassword(
-    userId: ID!
-    oldPassword: String!
-    newPassword: String!
-  ): Boolean!
-
+  changePassword(userId: ID!, oldPassword: String!, newPassword: String!): Boolean!
   updateUserLocation(userId: ID!, latitude: Float!, longitude: Float!): Boolean!
   updateUserPhoneNumber(userId: ID!, phoneNumber: String!): Boolean!
-
   setRescuerAvailability(rescuerId: ID!, available: Boolean!): Boolean!
   updateRescuerLocation(rescuerId: ID!, latitude: Float!, longitude: Float!): Boolean!
-
   bookmarkUser(userId: ID!, bookmarkedUserId: ID!): Boolean!
   removeBookmark(userId: ID!, bookmarkedUserId: ID!): Boolean!
-
   createCalamity(input: CreateCalamityInput!): Calamity!
   updateCalamity(input: UpdateCalamityInput!): Calamity!
   deleteCalamity(id: ID!): Boolean!
-
   updateUserStatus(input: UpdateUserStatusInput!): UserStatusUpdate!
-
   createIncident(input: CreateIncidentInput!): Incident!
+  createRescueTask(input: CreateRescueTaskInput!): RescueTask!
+  updateRescueTaskStatus(input: UpdateRescueTaskStatusInput!): RescueTask!
 }

@@ -35,7 +35,7 @@ public class RescueTask {
     @Column(columnDefinition = "text")
     private String notes;
 
-    public enum Status { Pending, InProgress, Completed, Failed }
+    public enum Status { PENDING, IN_PROGRESS, COMPLETED, FAILED }
 
     public UUID getId() {
         return id;

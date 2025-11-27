@@ -36,7 +36,6 @@ public class Incident {
     @Column(columnDefinition = "geometry(Point,4326)")
     private Point location;
 
-    // Renamed field for proper JPA query derivation
     private boolean rescueAssigned;
 
     @Column(columnDefinition = "text")
@@ -45,11 +44,28 @@ public class Incident {
     @Column(columnDefinition = "text")
     private String otherImportantDetails;
 
+    // --------------------------
+    // GraphQL convenience getters
+    // --------------------------
+
     /**
-     * GraphQL expects a "createdAt" field.
-     * Map it to detectedDatetime as ISO-8601 string.
+     * Expose calamityId for GraphQL queries
      */
-    public String getCreatedAt() {
+    public UUID getCalamityId() {
+        return calamity != null ? calamity.getId() : null;
+    }
+
+    /**
+     * Expose rescuerId for GraphQL queries
+     */
+    public UUID getRescuerId() {
+        return rescuer != null ? rescuer.getId() : null;
+    }
+
+    /**
+     * Map detectedDatetime to a GraphQL-friendly ISO string
+     */
+    public String getCreatedDatetime() {
         return detectedDatetime != null ? detectedDatetime.toString() : null;
     }
 

@@ -1,6 +1,7 @@
 package com.alalay.backend.controller;
 
 import com.alalay.backend.model.Incident;
+import com.alalay.backend.records.IncidentDTO;
 import com.alalay.backend.services.IncidentService;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -38,11 +39,23 @@ public class IncidentGraphQLController {
         return incidentService.getAllIncidents();
     }
 
-    // GraphQL Query to get incidents by calamity ID
     @QueryMapping(name = "getIncidentsByCalamity")
-    public List<Incident> getIncidentsByCalamity(@Argument UUID calamityId) {
-        return incidentService.getIncidentsByCalamity(calamityId);
+    public List<IncidentDTO> getIncidentsByCalamity(@Argument UUID calamityId) {
+        return incidentService.getIncidentsByCalamity(calamityId).stream()
+                .map(inc -> new IncidentDTO(
+                        inc.getId(),
+                        inc.getCalamity() != null ? inc.getCalamity().getId() : null,
+                        inc.getRescuer() != null ? inc.getRescuer().getId() : null,
+                        inc.getLatitude(),
+                        inc.getLongitude(),
+                        inc.getDescription(),
+                        inc.getOtherAffectedMembers(),
+                        inc.getOtherImportantDetails(),
+                        inc.getDetectedDatetime() != null ? inc.getDetectedDatetime().toString() : null
+                ))
+                .toList();
     }
+
 
     // Input DTO for GraphQL
     @Data

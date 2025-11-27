@@ -31,8 +31,10 @@ public class RescueService {
 
     @Transactional
     public RescueTask assignRescue(UUID incidentId, UUID rescuerId, String notes) {
-        Incident incident = incidentRepo.findById(incidentId).orElseThrow();
-        User rescuer = userRepo.findById(rescuerId).orElseThrow();
+        Incident incident = incidentRepo.findById(incidentId)
+                .orElseThrow(() -> new RuntimeException("Incident not found"));
+        User rescuer = userRepo.findById(rescuerId)
+                .orElseThrow(() -> new RuntimeException("Rescuer not found"));
 
         // create task
         RescueTask task = RescueTask.builder()
@@ -40,14 +42,17 @@ public class RescueService {
                 .incident(incident)
                 .assignedRescuer(rescuer)
                 .assignedDatetime(Instant.now())
-                .status(RescueTask.Status.Pending)
+                .status(RescueTask.Status.PENDING) // use the entity enum
                 .notes(notes)
                 .build();
 
+        // mark incident as rescue assigned
         incident.setRescueAssigned(true);
         incidentRepo.save(incident);
+
         return rescueRepo.save(task);
     }
+
 
     public List<RescueTask> findByStatus(RescueTask.Status status) {
         if (status == null) return rescueRepo.findAll();
