@@ -178,7 +178,7 @@ type Query {
   getResponseLogsByCalamity(calamityId: ID!): [ResponseLog!]!
 
   getUser(id: ID!): User
-  getUsers: [User!]
+  getUsers: [User!]   # <--- this is the correct field
 
   getCalamity(id: ID!): Calamity
   getCalamities: [Calamity!]

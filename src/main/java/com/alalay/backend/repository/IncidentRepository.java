@@ -21,4 +21,11 @@ public interface IncidentRepository extends JpaRepository<Incident, UUID> {
 
     // Filter by rescuer
     List<Incident> findByRescuer_Id(UUID rescuerId);
+
+
+    // Find all incidents for a calamity
+    List<Incident> findByCalamityId(UUID calamityId);
+
+    // Find incidents assigned / unassigned
+    List<Incident> findByRescueAssigned(boolean rescueAssigned);
 }

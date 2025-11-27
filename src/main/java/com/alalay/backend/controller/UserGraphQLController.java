@@ -47,13 +47,15 @@ public class UserGraphQLController {
 
     /* ============================= QUERIES ============================= */
 
+    // Renamed to match GraphQL schema: getUsers
     @QueryMapping
-    public List<User> users() {
+    public List<User> getUsers() {
         return userService.findAll();
     }
 
+    // Renamed to match GraphQL schema: getUser
     @QueryMapping
-    public User user(@Argument UUID id) {
+    public User getUser(@Argument UUID id) {
         return userService.findById(id).orElse(null);
     }
 
@@ -135,6 +137,17 @@ public class UserGraphQLController {
         }
     }
 
+    @MutationMapping
+    public boolean updateUserPhoneNumber(@Argument UUID userId, @Argument String phoneNumber) {
+        requireAuthentication();
+        try {
+            userService.updateUserPhoneNumber(userId, phoneNumber);
+            return true;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to update phone number: " + e.getMessage(), e);
+        }
+    }
+
     /* ============================= LOGIN (returns token + user) ============================= */
 
     @MutationMapping
@@ -171,12 +184,10 @@ public class UserGraphQLController {
             User user = userService.findById(userId)
                     .orElseThrow(() -> new RuntimeException("User not found"));
 
-            // Verify old password
             if (!userService.verifyPassword(oldPassword, user.getPassword())) {
                 throw new RuntimeException("Old password is incorrect");
             }
 
-            // Encode new password and update
             String encodedPassword = passwordEncoder.encode(newPassword);
             userService.updatePassword(userId, encodedPassword);
 
@@ -185,7 +196,6 @@ public class UserGraphQLController {
             throw new RuntimeException("Failed to change password: " + e.getMessage(), e);
         }
     }
-
 
     /* ============================= HELPER ============================= */
 
