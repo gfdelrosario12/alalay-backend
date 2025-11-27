@@ -3,6 +3,7 @@ package com.alalay.backend.model;
 import jakarta.persistence.*;
 import lombok.*;
 import org.locationtech.jts.geom.Point;
+
 import java.time.Instant;
 import java.util.UUID;
 
@@ -44,4 +45,22 @@ public class Incident {
     @Column(columnDefinition = "text")
     private String otherImportantDetails;
 
+    /**
+     * GraphQL expects a "createdAt" field.
+     * Map it to detectedDatetime as ISO-8601 string.
+     */
+    public String getCreatedAt() {
+        return detectedDatetime != null ? detectedDatetime.toString() : null;
+    }
+
+    /**
+     * Optional: convenience getters for latitude/longitude in GraphQL
+     */
+    public Double getLatitude() {
+        return location != null ? location.getY() : null;
+    }
+
+    public Double getLongitude() {
+        return location != null ? location.getX() : null;
+    }
 }

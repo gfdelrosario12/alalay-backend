@@ -30,24 +30,18 @@ type User {
   age: Int
   birthDate: String
 
-  # Separate emergency contact fields
   emergencyContactName: String
   emergencyContactDetails: String
 
   phoneNumber: String
   role: Role!
 
-  # Location fields
   currentLatitude: Float
   currentLongitude: Float
 
-  # For rescuers
   isAvailable: Boolean
-
-  # Resolver field returning a list of other User types
   bookmarkedUsers: [User!]
 
-  # Timestamps
   createdAt: String
 }
 
@@ -78,7 +72,6 @@ type AuthPayload {
   token: String!
   user: User!
 
-  # Flattened user fields for convenience
   id: ID!
   email: String!
   firstName: String
@@ -100,6 +93,22 @@ type ResponseLog {
 }
 
 # =========================
+# INCIDENT TYPE
+# =========================
+
+type Incident {
+  id: ID!
+  description: String!
+  calamity: Calamity!
+  rescuer: User        # Made nullable
+  latitude: Float
+  longitude: Float
+  otherAffectedMembers: String
+  otherImportantDetails: String
+  createdAt: String!
+}
+
+# =========================
 # INPUTS
 # =========================
 
@@ -112,11 +121,8 @@ input CreateUserInput {
   permanentAddress: String
   age: Int
   birthDate: String
-
-  # Separate emergency contact fields
   emergencyContactName: String
   emergencyContactDetails: String
-
   phoneNumber: String
   role: Role!
 }
@@ -131,11 +137,8 @@ input UpdateUserInput {
   permanentAddress: String
   age: Int
   birthDate: String
-
-  # Separate emergency contact fields
   emergencyContactName: String
   emergencyContactDetails: String
-
   phoneNumber: String
   role: Role
 }
@@ -154,7 +157,7 @@ input CreateCalamityInput {
   description: String
   calamityCategory: String
   reportedEndDate: String
-  affectedAreasWKT: String       # <-- matches Java
+  affectedAreasWKT: String
   status: Status
 }
 
@@ -164,7 +167,7 @@ input UpdateCalamityInput {
   description: String
   calamityCategory: String
   reportedEndDate: String
-  affectedAreasWKT: String       # <-- matches Java
+  affectedAreasWKT: String
   status: Status
 }
 
@@ -178,7 +181,21 @@ input UpdateUserStatusInput {
 }
 
 # =========================
-# QUERIES (Read Operations)
+# Incident Input
+# =========================
+
+input CreateIncidentInput {
+  description: String!
+  calamityId: ID!
+  rescuerId: ID!       # was reporterId
+  latitude: Float
+  longitude: Float
+  otherAffectedMembers: String
+  otherImportantDetails: String
+}
+
+# =========================
+# QUERIES
 # =========================
 
 type Query {
@@ -193,45 +210,42 @@ type Query {
   getCalamities: [Calamity!]
 
   getUserStatusUpdates(userId: ID!): [UserStatusUpdate!]
+
+  getIncidents: [Incident!]!
+  getIncidentsByCalamity(calamityId: ID!): [Incident!]!
 }
 
 # =========================
-# MUTATIONS (Write Operations)
+# MUTATIONS
 # =========================
 
 type Mutation {
-  # Authentication
   login(input: LoginInput!): AuthPayload!
 
-  # User Management
   createUser(input: CreateUserInput!): User!
   updateUser(input: UpdateUserInput!): User!
   deleteUser(id: ID!): Boolean!
 
-  # Password change
   changePassword(
     userId: ID!
     oldPassword: String!
     newPassword: String!
   ): Boolean!
 
-  # User Location & Phone Number Updates
   updateUserLocation(userId: ID!, latitude: Float!, longitude: Float!): Boolean!
   updateUserPhoneNumber(userId: ID!, phoneNumber: String!): Boolean!
 
-  # Rescuer Management
   setRescuerAvailability(rescuerId: ID!, available: Boolean!): Boolean!
   updateRescuerLocation(rescuerId: ID!, latitude: Float!, longitude: Float!): Boolean!
 
-  # Bookmarks
   bookmarkUser(userId: ID!, bookmarkedUserId: ID!): Boolean!
   removeBookmark(userId: ID!, bookmarkedUserId: ID!): Boolean!
 
-  # Calamity Management
   createCalamity(input: CreateCalamityInput!): Calamity!
   updateCalamity(input: UpdateCalamityInput!): Calamity!
   deleteCalamity(id: ID!): Boolean!
 
-  # Status Management
   updateUserStatus(input: UpdateUserStatusInput!): UserStatusUpdate!
+
+  createIncident(input: CreateIncidentInput!): Incident!
 }
