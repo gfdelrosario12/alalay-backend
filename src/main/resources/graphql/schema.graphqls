@@ -27,11 +27,15 @@ type User {
   permanentAddress: String
   age: Int
   birthDate: String
-  emergencyContact: String
+
+  # Separate emergency contact fields
+  emergencyContactName: String
+  emergencyContactDetails: String
+
   phoneNumber: String
   role: Role!
 
-  # Location fields for current location
+  # Location fields
   currentLatitude: Float
   currentLongitude: Float
 
@@ -40,6 +44,9 @@ type User {
 
   # Resolver field returning a list of other User types
   bookmarkedUsers: [User!]
+
+  # Timestamps
+  createdAt: String
 }
 
 type Calamity {
@@ -72,8 +79,21 @@ type AuthPayload {
   id: ID!
   email: String!
   firstName: String
+  middleName: String
   lastName: String
   role: Role!
+  createdAt: String
+}
+
+type ResponseLog {
+  id: ID!
+  user: User!
+  calamity: Calamity!
+  description: String
+  logLatitude: Float
+  logLongitude: Float
+  logDatetime: String
+  responseDetails: String
 }
 
 # =========================
@@ -89,7 +109,11 @@ input CreateUserInput {
   permanentAddress: String
   age: Int
   birthDate: String
-  emergencyContact: String
+
+  # Separate emergency contact fields
+  emergencyContactName: String
+  emergencyContactDetails: String
+
   phoneNumber: String
   role: Role!
 }
@@ -104,7 +128,11 @@ input UpdateUserInput {
   permanentAddress: String
   age: Int
   birthDate: String
-  emergencyContact: String
+
+  # Separate emergency contact fields
+  emergencyContactName: String
+  emergencyContactDetails: String
+
   phoneNumber: String
   role: Role
 }
@@ -145,13 +173,17 @@ input UpdateUserStatusInput {
 # =========================
 
 type Query {
-  users: [User!]!
-  user(id: ID!): User
-  availableRescuers(lat: Float!, lon: Float!, limit: Int = 10): [User!]!
-  bookmarkedUsers(userId: ID!): [User!]!
-  calamities: [Calamity!]!
-  calamity(id: ID!): Calamity
-  userStatusUpdates(userId: ID!, calamityId: ID!): [UserStatusUpdate!]!
+  getResponseLogs: [ResponseLog!]!
+  getResponseLogsByUser(userId: ID!): [ResponseLog!]!
+  getResponseLogsByCalamity(calamityId: ID!): [ResponseLog!]!
+
+  getUser(id: ID!): User
+  getUsers: [User!]
+
+  getCalamity(id: ID!): Calamity
+  getCalamities: [Calamity!]
+
+  getUserStatusUpdates(userId: ID!): [UserStatusUpdate!]
 }
 
 # =========================
@@ -166,6 +198,13 @@ type Mutation {
   createUser(input: CreateUserInput!): User!
   updateUser(input: UpdateUserInput!): User!
   deleteUser(id: ID!): Boolean!
+
+  # Password change
+  changePassword(
+    userId: ID!
+    oldPassword: String!
+    newPassword: String!
+  ): Boolean!
 
   # User Location & Phone Number Updates
   updateUserLocation(userId: ID!, latitude: Float!, longitude: Float!): Boolean!

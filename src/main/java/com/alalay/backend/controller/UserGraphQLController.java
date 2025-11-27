@@ -76,7 +76,8 @@ public class UserGraphQLController {
                     input.permanentAddress(),
                     input.age(),
                     birthDate,
-                    input.emergencyContact(),
+                    input.emergencyContactName(),
+                    input.emergencyContactDetails(),
                     input.phoneNumber(),
                     input.role()
             );
@@ -101,7 +102,8 @@ public class UserGraphQLController {
                     input.permanentAddress(),
                     input.age(),
                     birthDate,
-                    input.emergencyContact(),
+                    input.emergencyContactName(),
+                    input.emergencyContactDetails(),
                     input.phoneNumber(),
                     input.role()
             );
@@ -157,6 +159,34 @@ public class UserGraphQLController {
         );
     }
 
+    @MutationMapping
+    public boolean changePassword(
+            @Argument UUID userId,
+            @Argument String oldPassword,
+            @Argument String newPassword
+    ) {
+        requireAuthentication();
+
+        try {
+            User user = userService.findById(userId)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+            // Verify old password
+            if (!userService.verifyPassword(oldPassword, user.getPassword())) {
+                throw new RuntimeException("Old password is incorrect");
+            }
+
+            // Encode new password and update
+            String encodedPassword = passwordEncoder.encode(newPassword);
+            userService.updatePassword(userId, encodedPassword);
+
+            return true;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to change password: " + e.getMessage(), e);
+        }
+    }
+
+
     /* ============================= HELPER ============================= */
 
     private void requireAuthentication() {
@@ -186,7 +216,8 @@ public class UserGraphQLController {
             String permanentAddress,
             Integer age,
             String birthDate,
-            String emergencyContact,
+            String emergencyContactName,
+            String emergencyContactDetails,
             String phoneNumber,
             User.Role role
     ) {}
@@ -201,7 +232,8 @@ public class UserGraphQLController {
             String permanentAddress,
             Integer age,
             String birthDate,
-            String emergencyContact,
+            String emergencyContactName,
+            String emergencyContactDetails,
             String phoneNumber,
             User.Role role
     ) {}

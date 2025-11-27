@@ -61,7 +61,8 @@ public class UserService {
             String permanentAddress,
             Integer age,
             LocalDate birthDate,
-            String emergencyContact,
+            String emergencyContactName,
+            String emergencyContactDetails,
             String phoneNumber,
             User.Role role
     ) {
@@ -77,7 +78,8 @@ public class UserService {
                 .permanentAddress(permanentAddress)
                 .age(age)
                 .birthDate(birthDate)
-                .emergencyContact(emergencyContact)
+                .emergencyContactName(emergencyContactName)
+                .emergencyContactDetails(emergencyContactDetails)
                 .phoneNumber(phoneNumber)
                 .currentLocation(null)
                 .role(role)
@@ -113,7 +115,8 @@ public class UserService {
             String permanentAddress,
             Integer age,
             LocalDate birthDate,
-            String emergencyContact,
+            String emergencyContactName,
+            String emergencyContactDetails,
             String phoneNumber,
             User.Role role
     ) {
@@ -128,7 +131,8 @@ public class UserService {
         if (permanentAddress != null) user.setPermanentAddress(permanentAddress);
         if (age != null) user.setAge(age);
         if (birthDate != null) user.setBirthDate(birthDate);
-        if (emergencyContact != null) user.setEmergencyContact(emergencyContact);
+        if (emergencyContactName != null) user.setEmergencyContactName(emergencyContactName);
+        if (emergencyContactDetails != null) user.setEmergencyContactDetails(emergencyContactDetails);
         if (phoneNumber != null) user.setPhoneNumber(phoneNumber);
         if (role != null) user.setRole(role);
 
@@ -192,4 +196,20 @@ public class UserService {
         return passwordEncoder.matches(rawPassword, hashedPassword);
     }
 
+    /* =============================
+       GET USER BY ID
+       ============================= */
+    public User getUserById(UUID id) {
+        return userRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+    }
+
+    @Transactional
+    public void updatePassword(UUID userId, String encodedPassword) {
+        User user = userRepo.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        user.setPassword(encodedPassword);
+        userRepo.save(user);
+    }
 }

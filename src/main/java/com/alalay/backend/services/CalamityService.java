@@ -110,4 +110,14 @@ public class CalamityService {
         calamityRepo.deleteById(id);
         return true;
     }
+
+    /* =============================
+       GET CALAMITY BY ID
+       ============================= */
+    @Transactional
+    public Calamity getCalamityById(UUID id) {
+        return calamityRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Calamity not found with id: " + id));
+    }
+
 }
